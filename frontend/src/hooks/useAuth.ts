@@ -46,7 +46,7 @@ export const useAuth = () => {
     onSuccess: (res) => {
       setUser(res.data)
       queryClient.invalidateQueries({ queryKey: ['me'] })
-      router.push('/')
+      router.push(res.data.role === 'admin' ? '/admin' : '/')
     },
   })
 
