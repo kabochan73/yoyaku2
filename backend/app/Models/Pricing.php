@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pricing extends Model
 {
+    protected $table = 'pricing';
+
     protected $fillable = [
         'base_price',
         'extra_hour_price',
