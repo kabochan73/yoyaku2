@@ -18,12 +18,17 @@ export const Header = () => {
         <nav className="flex items-center gap-3">
           {user ? (
             <>
-              <span className="text-sm text-gray-600">{user.name}</span>
               <Link
                 href="/mypage"
                 className="text-sm text-gray-700 hover:text-green-600"
               >
-                マイページ
+                予約一覧
+              </Link>
+              <Link
+                href="/mypage/profile"
+                className="text-sm text-gray-700 hover:text-green-600"
+              >
+                {user.name}
               </Link>
               <button
                 onClick={() => logout.mutate()}
