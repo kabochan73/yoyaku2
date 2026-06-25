@@ -23,6 +23,7 @@ export const useReservations = () => {
       api.post<Reservation>('/api/reservations', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] })
+      queryClient.invalidateQueries({ queryKey: ['availability'] })
     },
   })
 
@@ -32,6 +33,7 @@ export const useReservations = () => {
       api.patch<Reservation>(`/api/reservations/${id}/cancel`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reservations'] })
+      queryClient.invalidateQueries({ queryKey: ['availability'] })
     },
   })
 

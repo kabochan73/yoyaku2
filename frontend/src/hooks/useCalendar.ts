@@ -42,8 +42,9 @@ export const useCalendar = (from: string, to: string) => {
     slotEnd.setHours(slotEnd.getHours() + 1)
 
     return bookedSlots.some((b) => {
-      const bStart = new Date(b.start_datetime)
-      const bEnd = new Date(b.end_datetime)
+      // LaravelがUTC扱いで返すZを除去しローカル時刻として比較
+      const bStart = new Date(b.start_datetime.replace('Z', ''))
+      const bEnd = new Date(b.end_datetime.replace('Z', ''))
       return bStart < slotEnd && bEnd > slotStart
     })
   }

@@ -26,7 +26,10 @@ export const useAuth = () => {
 
   // 登録
   const register = useMutation({
-    mutationFn: (data: RegisterInput) => api.post<User>('/api/register', data),
+    mutationFn: async (data: RegisterInput) => {
+      await api.get('/sanctum/csrf-cookie')
+      return api.post<User>('/api/register', data)
+    },
     onSuccess: (res) => {
       setUser(res.data)
       queryClient.invalidateQueries({ queryKey: ['me'] })
@@ -36,7 +39,10 @@ export const useAuth = () => {
 
   // ログイン
   const login = useMutation({
-    mutationFn: (data: LoginInput) => api.post<User>('/api/login', data),
+    mutationFn: async (data: LoginInput) => {
+      await api.get('/sanctum/csrf-cookie')
+      return api.post<User>('/api/login', data)
+    },
     onSuccess: (res) => {
       setUser(res.data)
       queryClient.invalidateQueries({ queryKey: ['me'] })

@@ -1,30 +1,39 @@
-import { WeeklyCalendar } from './_components/WeeklyCalendar'
+import Image from 'next/image'
+import { WeeklyCalendarClient } from './_components/WeeklyCalendarClient'
 
 export default function TopPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-12">
       {/* 施設情報 */}
       <section>
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">
-          フットサルコートへようこそ
-        </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InfoCard title="営業時間" content="10:00 〜 22:00（最終受付 20:00）" />
-          <InfoCard title="料金" content="2時間 ¥10,000 / 延長1時間 ¥5,000" />
-          <InfoCard title="住所" content="〇〇県〇〇市〇〇町1-2-3" />
-          <InfoCard title="お問い合わせ" content="000-0000-0000" />
-          <InfoCard title="支払い方法" content="現金・クレジットカード" />
-          <InfoCard
-            title="設備・レンタル"
-            content="シャワー・ロッカー / ビブス・ボールレンタルあり"
-          />
+          {/* 左上：施設情報 */}
+          <div className="grid grid-cols-1 gap-4 content-start">
+            <InfoCard title="営業時間" content="10:00 〜 22:00（最終受付 20:00）" />
+            <InfoCard title="料金" content="2時間 ¥10,000 / 延長1時間 ¥5,000" />
+            <InfoCard title="住所" content="〇〇県〇〇市〇〇町1-2-3" />
+          </div>
+          {/* 右上：画像 */}
+          <div className="relative h-64 md:h-auto rounded-lg overflow-hidden">
+            <Image src="/court1.jpg" alt="フットサルコート" fill className="object-cover" />
+          </div>
+          {/* 左下：画像 */}
+          <div className="relative h-64 md:h-auto rounded-lg overflow-hidden">
+            <Image src="/court2.jpg" alt="フットサルコート" fill className="object-cover" />
+          </div>
+          {/* 右下：施設情報 */}
+          <div className="grid grid-cols-1 gap-4 content-start">
+            <InfoCard title="お問い合わせ" content="000-0000-0000" />
+            <InfoCard title="支払い方法" content="現金・クレジットカード" />
+            <InfoCard title="設備・レンタル" content="シャワー・ロッカー / ビブス・ボールレンタルあり" />
+          </div>
         </div>
       </section>
 
       {/* 予約カレンダー */}
       <section>
         <h2 className="text-xl font-bold text-gray-800 mb-4">予約カレンダー</h2>
-        <WeeklyCalendar />
+        <WeeklyCalendarClient />
       </section>
 
       {/* 利用規約 */}

@@ -9,7 +9,12 @@ import { ReserveModal } from './ReserveModal'
 const HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 
-const toDateStr = (date: Date) => date.toISOString().split('T')[0]
+const toDateStr = (date: Date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
 
 const addDays = (date: Date, days: number) => {
   const d = new Date(date)
@@ -130,7 +135,7 @@ export const WeeklyCalendar = () => {
                           : 'cursor-default'
                       }`}
                     >
-                      {past || holiday ? '—' : available ? '⭕' : '❌'}
+                      {past || holiday ? '—' : available ? '〇' : '❌'}
                     </td>
                   )
                 })}
