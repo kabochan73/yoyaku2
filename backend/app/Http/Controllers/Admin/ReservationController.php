@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Holiday;
+use App\Mail\ReservationCancelled;
+use App\Mail\ReservationConfirmed;
 use App\Models\Pricing;
 use App\Models\Reservation;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class ReservationController extends Controller
 {
@@ -55,6 +56,8 @@ class ReservationController extends Controller
             'status' => 'confirmed',
         ]);
 
+        Mail::to($reservation->load('user')->user)->send(new ReservationConfirmed($reservation));
+
         return response()->json($reservation->load('user'), 201);
     }
 
@@ -65,6 +68,8 @@ class ReservationController extends Controller
         }
 
         $reservation->update(['status' => 'cancelled']);
+
+        Mail::to($reservation->load('user')->user)->send(new ReservationCancelled($reservation));
 
         return response()->json($reservation);
     }
