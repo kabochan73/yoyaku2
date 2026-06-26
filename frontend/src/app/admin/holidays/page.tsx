@@ -1,23 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/authStore'
 import api from '@/lib/axios'
 import type { Holiday, WeeklyHoliday } from '@/types'
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 
 export default function AdminHolidaysPage() {
-  const { user } = useAuthStore()
-  const router = useRouter()
   const queryClient = useQueryClient()
   const [date, setDate] = useState('')
-
-  useEffect(() => {
-    if (!user || user.role !== 'admin') router.push('/')
-  }, [user, router])
 
   // 特定日付の定休日
   const { data: holidays = [], isLoading } = useQuery({
@@ -70,8 +62,6 @@ export default function AdminHolidaysPage() {
       queryClient.invalidateQueries({ queryKey: ['weekly-holidays'] })
     },
   })
-
-  if (!user || user.role !== 'admin') return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

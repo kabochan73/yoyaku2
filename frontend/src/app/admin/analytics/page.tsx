@@ -1,9 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/authStore'
 import api from '@/lib/axios'
 
 type AnalyticsData = {
@@ -19,15 +17,9 @@ const HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 const MONTH_LABELS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
 
 export default function AdminAnalyticsPage() {
-  const { user } = useAuthStore()
-  const router = useRouter()
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
-
-  useEffect(() => {
-    if (!user || user.role !== 'admin') router.push('/')
-  }, [user, router])
 
   // 選択月のデータ
   const { data, isLoading } = useQuery({
@@ -50,8 +42,6 @@ export default function AdminAnalyticsPage() {
       return results.map(r => r.data)
     },
   })
-
-  if (!user || user.role !== 'admin') return null
 
   const prevMonth = () => {
     if (month === 1) { setYear(y => y - 1); setMonth(12) }

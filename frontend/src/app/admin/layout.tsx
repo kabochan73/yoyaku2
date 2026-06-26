@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { LogoutButton } from './_components/LogoutButton'
+import { AdminGuard } from './_components/AdminGuard'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -27,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </div>
       </header>
-      <main>{children}</main>
+      <main><AdminGuard>{children}</AdminGuard></main>
     </div>
   )
 }

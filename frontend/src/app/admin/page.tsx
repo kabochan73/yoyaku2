@@ -1,36 +1,36 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/authStore'
 import { useAdminReservations } from '@/hooks/useAdminReservations'
 import api from '@/lib/axios'
-import type { User } from '@/types'
+import type { User, Holiday, WeeklyHoliday, Reservation } from '@/types'
 
-const DAY_LABELS = ['月', '火', '水', '木', '金', '土', '日']
+const HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 const START_HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
-function getMonday(date: Date): Date {
+const toDateStr = (date: Date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const addDays = (date: Date, days: number) => {
   const d = new Date(date)
-  const day = d.getDay()
-  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1))
-  d.setHours(0, 0, 0, 0)
+  d.setDate(d.getDate() + days)
   return d
 }
 
-function toDateString(date: Date): string {
-  return date.toISOString().slice(0, 10)
-}
-
-function formatTime(datetime: string): string {
-  return datetime.slice(11, 16)
+const getWeekStart = (offset: number) => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return addDays(today, offset * 7)
 }
 
 export default function AdminReservationsPage() {
-  const { user } = useAuthStore()
-  const router = useRouter()
-  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
+  const [weekOffset, setWeekOffset] = useState(0)
   const [modal, setModal] = useState<{ date: string } | null>(null)
   const [form, setForm] = useState({ user_id: '', hour: '10', hours: '2' })
 
@@ -44,32 +44,54 @@ export default function AdminReservationsPage() {
     },
   })
 
-  useEffect(() => {
-    if (!user || user.role !== 'admin') router.push('/')
-  }, [user, router])
-
-  if (!user || user.role !== 'admin') return null
-
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart)
-    d.setDate(d.getDate() + i)
-    return d
+  const { data: holidays = [] } = useQuery({
+    queryKey: ['holidays'],
+    queryFn: async () => {
+      const res = await api.get<Holiday[]>('/api/holidays')
+      return res.data
+    },
   })
 
-  const prevWeek = () => {
-    const d = new Date(weekStart)
-    d.setDate(d.getDate() - 7)
-    setWeekStart(d)
+  const { data: weeklyHolidays = [] } = useQuery({
+    queryKey: ['weekly-holidays'],
+    queryFn: async () => {
+      const res = await api.get<WeeklyHoliday[]>('/api/weekly-holidays')
+      return res.data
+    },
+  })
+
+  const weekStart = getWeekStart(weekOffset)
+  const weekEnd = addDays(weekStart, 6)
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  const from = toDateStr(weekStart)
+  const to = toDateStr(weekEnd)
+
+  const isHoliday = (dateStr: string) => {
+    if (holidays.some((h) => h.date === dateStr)) return true
+    const dayOfWeek = new Date(dateStr).getDay()
+    return weeklyHolidays.some((wh) => wh.day_of_week === dayOfWeek)
   }
 
-  const nextWeek = () => {
-    const d = new Date(weekStart)
-    d.setDate(d.getDate() + 7)
-    setWeekStart(d)
+  const isPast = (dateStr: string, hour: number) => {
+    const slot = new Date(`${dateStr}T${String(hour).padStart(2, '0')}:00:00`)
+    return slot <= new Date()
   }
 
-  const openModal = (date: string) => {
-    setForm({ user_id: users[0]?.id.toString() ?? '', hour: '10', hours: '2' })
+  const getReservationForSlot = (dateStr: string, hour: number): Reservation | undefined => {
+    const slotStart = new Date(`${dateStr}T${String(hour).padStart(2, '0')}:00:00`)
+    const slotEnd = new Date(slotStart)
+    slotEnd.setHours(slotEnd.getHours() + 1)
+
+    return reservations.find(r => {
+      if (r.status !== 'confirmed') return false
+      const rStart = new Date(r.start_datetime.replace('Z', ''))
+      const rEnd = new Date(r.end_datetime.replace('Z', ''))
+      return rStart < slotEnd && rEnd > slotStart
+    })
+  }
+
+  const openModal = (date: string, hour: number) => {
+    setForm({ user_id: users[0]?.id.toString() ?? '', hour: String(hour), hours: '2' })
     setModal({ date })
   }
 
@@ -82,68 +104,109 @@ export default function AdminReservationsPage() {
     )
   }
 
-  const weekLabel = `${weekStart.getFullYear()}年${weekStart.getMonth() + 1}月${weekStart.getDate()}日（月）〜${days[6].getMonth() + 1}月${days[6].getDate()}日（日）`
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* 週ナビゲーション */}
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={prevWeek} className="text-sm px-3 py-1.5 border rounded hover:bg-gray-100">
-          &lt; 前の週
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => setWeekOffset(o => o - 1)}
+          className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+        >
+          ← 前週
         </button>
-        <span className="text-sm font-medium text-gray-700">{weekLabel}</span>
-        <button onClick={nextWeek} className="text-sm px-3 py-1.5 border rounded hover:bg-gray-100">
-          次の週 &gt;
+        <span className="text-sm text-gray-600">{from} 〜 {to}</span>
+        <button
+          onClick={() => setWeekOffset(o => o + 1)}
+          className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+        >
+          次週 →
         </button>
       </div>
 
-      {/* カレンダー */}
+      {/* カレンダーテーブル */}
       {isLoading ? (
         <p className="text-gray-500 text-sm">読み込み中...</p>
       ) : (
-        <div className="grid grid-cols-7 gap-2">
-          {days.map((day, i) => {
-            const dateStr = toDateString(day)
-            const dayReservations = reservations
-              .filter(r => r.status === 'confirmed' && r.start_datetime.startsWith(dateStr))
-              .sort((a, b) => a.start_datetime.localeCompare(b.start_datetime))
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr>
+                <th className="border p-2 bg-gray-50 w-16" />
+                {days.map((day) => {
+                  const dateStr = toDateStr(day)
+                  const dayOfWeek = day.getDay()
+                  const holiday = isHoliday(dateStr)
+                  return (
+                    <th
+                      key={dateStr}
+                      className={`border p-2 text-center ${
+                        holiday ? 'bg-red-50 text-red-400' :
+                        dayOfWeek === 0 ? 'text-red-500' :
+                        dayOfWeek === 6 ? 'text-blue-500' : 'bg-gray-50'
+                      }`}
+                    >
+                      <div>{`${day.getMonth() + 1}/${day.getDate()}`}</div>
+                      <div className="text-xs">{WEEKDAYS[dayOfWeek]}</div>
+                      {holiday && <div className="text-xs">定休日</div>}
+                    </th>
+                  )
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {HOURS.map((hour) => (
+                <tr key={hour}>
+                  <td className="border p-2 text-center text-gray-500 text-xs bg-gray-50">
+                    {hour}:00
+                  </td>
+                  {days.map((day) => {
+                    const dateStr = toDateStr(day)
+                    const past = isPast(dateStr, hour)
+                    const holiday = isHoliday(dateStr)
+                    const reservation = getReservationForSlot(dateStr, hour)
 
-            return (
-              <div key={dateStr} className="border rounded-lg p-2 bg-white min-h-40">
-                <p className={`text-xs font-semibold text-center mb-2 ${i >= 5 ? 'text-red-500' : 'text-gray-700'}`}>
-                  {DAY_LABELS[i]} {day.getMonth() + 1}/{day.getDate()}
-                </p>
+                    if (past || holiday) {
+                      return (
+                        <td key={dateStr} className="border p-1 text-center bg-gray-100">
+                          {reservation ? (
+                            <span className="text-xs text-gray-400 truncate block">{reservation.user?.name}</span>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                      )
+                    }
 
-                {dayReservations.length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center mb-2">予約なし</p>
-                ) : (
-                  <ul className="space-y-1 mb-2">
-                    {dayReservations.map(r => (
-                      <li key={r.id} className="bg-green-50 border border-green-200 rounded p-1.5 text-xs">
-                        <p className="font-medium text-green-800 truncate">{r.user?.name}</p>
-                        <p className="text-green-600">{formatTime(r.start_datetime)}〜{formatTime(r.end_datetime)}</p>
-                        <button
-                          onClick={() => {
-                            if (confirm('予約をキャンセルしますか？')) cancel.mutate(r.id)
-                          }}
-                          className="text-red-500 hover:text-red-700 mt-0.5"
-                        >
-                          キャンセル
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                    if (reservation) {
+                      return (
+                        <td key={dateStr} className="border p-1 text-center bg-green-50">
+                          <p className="text-xs font-medium text-green-800 truncate">{reservation.user?.name}</p>
+                          <button
+                            onClick={() => {
+                              if (confirm('予約をキャンセルしますか？')) cancel.mutate(reservation.id)
+                            }}
+                            className="text-xs text-red-500 hover:text-red-700"
+                          >
+                            キャンセル
+                          </button>
+                        </td>
+                      )
+                    }
 
-                <button
-                  onClick={() => openModal(dateStr)}
-                  className="w-full text-xs text-gray-500 hover:text-green-600 border border-dashed border-gray-300 rounded py-1"
-                >
-                  + 予約する
-                </button>
-              </div>
-            )
-          })}
+                    return (
+                      <td
+                        key={dateStr}
+                        onClick={() => openModal(dateStr, hour)}
+                        className="border p-2 text-center text-gray-300 cursor-pointer hover:bg-green-50 hover:text-green-600 transition-colors"
+                      >
+                        +
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

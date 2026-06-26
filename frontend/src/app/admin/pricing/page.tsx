@@ -1,15 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/authStore'
 import api from '@/lib/axios'
 import type { Pricing } from '@/types'
 
 export default function AdminPricingPage() {
-  const { user } = useAuthStore()
-  const router = useRouter()
   const queryClient = useQueryClient()
   const [form, setForm] = useState({ base_price: '', extra_hour_price: '' })
 
@@ -30,10 +26,6 @@ export default function AdminPricingPage() {
   })
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') router.push('/')
-  }, [user, router])
-
-  useEffect(() => {
     if (pricing) {
       setForm({
         base_price: pricing.base_price.toString(),
@@ -41,8 +33,6 @@ export default function AdminPricingPage() {
       })
     }
   }, [pricing])
-
-  if (!user || user.role !== 'admin') return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

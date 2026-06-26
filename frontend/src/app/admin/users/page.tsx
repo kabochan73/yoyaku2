@@ -1,20 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/authStore'
 import api from '@/lib/axios'
 import type { User } from '@/types'
 
 export default function AdminUsersPage() {
-  const { user } = useAuthStore()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!user || user.role !== 'admin') router.push('/')
-  }, [user, router])
-
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin', 'users'],
     queryFn: async () => {
@@ -22,8 +12,6 @@ export default function AdminUsersPage() {
       return res.data
     },
   })
-
-  if (!user || user.role !== 'admin') return null
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
