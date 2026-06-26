@@ -14,6 +14,7 @@ Route::get('/availability', [AvailabilityController::class, 'index']);
 
 // カレンダー表示用（公開）
 Route::get('/holidays', [Admin\HolidayController::class, 'index']);
+Route::get('/weekly-holidays', [Admin\WeeklyHolidayController::class, 'index']);
 Route::get('/pricing', [Admin\PricingController::class, 'show']);
 
 // 認証必須
@@ -41,6 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/holidays', [Admin\HolidayController::class, 'index']);
         Route::post('/holidays', [Admin\HolidayController::class, 'store']);
         Route::delete('/holidays/{holiday}', [Admin\HolidayController::class, 'destroy']);
+
+        Route::get('/weekly-holidays', [Admin\WeeklyHolidayController::class, 'index']);
+        Route::post('/weekly-holidays', [Admin\WeeklyHolidayController::class, 'store']);
+        Route::delete('/weekly-holidays/{weeklyHoliday}', [Admin\WeeklyHolidayController::class, 'destroy']);
 
         Route::get('/analytics', [Admin\AnalyticsController::class, 'index']);
     });

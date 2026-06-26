@@ -1,5 +1,7 @@
+import { Suspense } from 'react'
 import Image from 'next/image'
 import { WeeklyCalendarClient } from './_components/WeeklyCalendarClient'
+import { PricingCard } from './_components/PricingCard'
 
 export default function TopPage() {
   return (
@@ -10,7 +12,9 @@ export default function TopPage() {
           {/* 左上：施設情報 */}
           <div className="grid grid-cols-1 gap-1 content-start">
             <InfoCard title="営業時間" content="10:00 〜 22:00（最終受付 20:00）" />
-            <InfoCard title="料金" content="2時間 ¥10,000 / 延長1時間 ¥5,000" />
+            <Suspense fallback={<InfoCard title="料金" content="読み込み中..." />}>
+              <PricingCard />
+            </Suspense>
             <InfoCard title="利用時間" content="最低2時間 〜 最大4時間" />
             <InfoCard title="住所" content="〇〇県〇〇市〇〇町1-2-3" />
           </div>
@@ -35,7 +39,9 @@ export default function TopPage() {
       {/* 予約カレンダー */}
       <section>
         <h2 className="text-xl font-bold text-gray-800 mb-4">予約カレンダー</h2>
-        <WeeklyCalendarClient />
+        <Suspense fallback={<div className="h-64" />}>
+          <WeeklyCalendarClient />
+        </Suspense>
       </section>
 
       {/* 利用規約 */}

@@ -25,6 +25,11 @@ export type Holiday = {
   date: string
 }
 
+export type WeeklyHoliday = {
+  id: number
+  day_of_week: number // 0=日, 1=月, ..., 6=土
+}
+
 export type Pricing = {
   id: number
   base_price: number

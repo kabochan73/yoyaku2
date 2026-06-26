@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/axios'
-import type { Holiday } from '@/types'
+import type { Holiday, WeeklyHoliday } from '@/types'
 
 type BookedSlot = {
   start_datetime: string
@@ -28,8 +28,19 @@ export const useCalendar = (from: string, to: string) => {
     },
   })
 
-  const isHoliday = (dateStr: string) =>
-    holidays.some((h) => h.date === dateStr)
+  const { data: weeklyHolidays = [] } = useQuery({
+    queryKey: ['weekly-holidays'],
+    queryFn: async () => {
+      const res = await api.get<WeeklyHoliday[]>('/api/weekly-holidays')
+      return res.data
+    },
+  })
+
+  const isHoliday = (dateStr: string) => {
+    if (holidays.some((h) => h.date === dateStr)) return true
+    const dayOfWeek = new Date(dateStr).getDay()
+    return weeklyHolidays.some((wh) => wh.day_of_week === dayOfWeek)
+  }
 
   const isPast = (dateStr: string, hour: number) => {
     const slot = new Date(`${dateStr}T${String(hour).padStart(2, '0')}:00:00`)
